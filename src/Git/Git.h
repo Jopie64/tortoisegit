@@ -2,6 +2,8 @@
 #include "GitRev.h"
 #include "GitStatus.h"
 #include "GitAdminDir.h"
+#include "afxcoll.h"
+
 enum
 {
 	GIT_SUCCESS=0,
