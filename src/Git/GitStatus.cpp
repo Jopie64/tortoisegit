@@ -189,7 +189,7 @@ stdstring GitStatus::GetLastErrorMsg() const
 // static method
 git_wc_status_kind GitStatus::GetAllStatus(const CTGitPath& path, git_depth_t depth)
 {
-	git_wc_status_kind			statuskind;
+	git_wc_status_kind			statuskind=git_wc_status_none;
 #if 0
 	git_client_ctx_t * 			ctx;
 	
