@@ -196,7 +196,7 @@ CString GetTempFile()
 
 int CGit::RunLogFile(CString cmd,CString &filename)
 {
-	HANDLE hRead, hWrite;
+//	HANDLE hRead, hWrite;
 
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
@@ -230,7 +230,7 @@ int CGit::RunLogFile(CString cmd,CString &filename)
 	CloseHandle(pi.hProcess);
 	CloseHandle(houtfile);
 	return GIT_SUCCESS;
-	return 0;
+//	return 0;
 }
 
 git_revnum_t CGit::GetHash(CString &friendname)
