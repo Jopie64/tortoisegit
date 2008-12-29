@@ -2,7 +2,10 @@
 #include "GitRev.h"
 #include "GitStatus.h"
 #include "GitAdminDir.h"
+#ifndef __AFXCOLL_H__
 #include "GitStringList.h"
+typedef CGitStringList CStringList;
+#endif //ifndef __AFXCOLL_H__
 
 enum
 {

@@ -178,6 +178,10 @@
 #define IDS_git_DEPTH_EXCLUDE           304
 #define IDS_git_DEPTH_UNKNOWN           305
 #define IDS_git_DEPTH_WORKING           306
+#define IDS_MENUSWITCH_HERE				307
+#define IDS_MENUCHERRYPICK_HERE			308
+#define IDS_MENUCHERRYPICK				309
+
 #define IDC_REVISION                    1001
 #define IDC_LOCKED                      1002
 #define IDC_REPOURL                     1003

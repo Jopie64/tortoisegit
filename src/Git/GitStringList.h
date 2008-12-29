@@ -2,7 +2,7 @@
 
 #include <list>
 
-class CGitStringList : public CObject
+class CGitStringList //: public CObject
 {
 
 //	DECLARE_SERIAL(CGitStringList)
