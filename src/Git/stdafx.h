@@ -14,7 +14,8 @@
 #define VC_EXTRALEAN            // Exclude rarely-used stuff from Windows headers
 #endif
 
-#include <afx.h>
+
+//#include <afx.h>
 #include <afxwin.h>         // MFC core and standard components
 
 #include <atlbase.h>
@@ -30,7 +31,6 @@
 #include <algorithm> 
 #pragma warning(pop)
 
-
 #include <afxdtctl.h>		// MFC support for Internet Explorer 4 Common Controls
 #ifndef _AFX_NO_AFXCMN_SUPPORT
 #include <afxcmn.h>			// MFC support for Windows Common Controls
@@ -43,5 +43,7 @@
 #include <afxcontrolbars.h>     // MFC support for ribbons and control bars
 
 #include <atlbase.h>
+
+
 
 // TODO: reference additional headers your program requires here
