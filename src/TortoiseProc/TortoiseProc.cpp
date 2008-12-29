@@ -74,8 +74,10 @@ CTortoiseProcApp::CTortoiseProcApp()
 	m_bLoadUserToolbars = FALSE;
 	m_bSaveState = FALSE;
 	retSuccess = false;
-	CGit git;
-	git.GetUserName();
+
+	//This doesnt work here because m_MsysGitPath is not yet initialized
+//	CGit git;
+//	git.GetUserName();
 }
 
 CTortoiseProcApp::~CTortoiseProcApp()

@@ -8,6 +8,7 @@ CGit g_Git;
 CGit::CGit(void)
 {
 	GetCurrentDirectory(MAX_DIRBUFFER,m_CurrentDir.GetBuffer(MAX_DIRBUFFER));
+	m_CurrentDir.ReleaseBuffer();
 }
 
 CGit::~CGit(void)
