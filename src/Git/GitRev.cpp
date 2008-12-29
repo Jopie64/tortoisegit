@@ -2,6 +2,18 @@
 #include "GitRev.h"
 #include "Git.h"
 
+#ifndef ASSERT
+void GitAssert(bool P_bVal, const char* P_szErrorPtr)
+{
+//	if(!P_bVal)
+//		MessageBox("Show some error here. Statement is in P_szErrorPtr");
+}
+
+#define GIT_STRINGER(P_Str) #P_Str
+#define ASSERT(P_Stmt) GitAssert(P_Stmt,GIT_STRINGER(P_Stmt));
+#endif //ifndef ASSERT
+
+
 GitRev::GitRev(void)
 {
 	m_Action=0;
@@ -110,6 +122,7 @@ int GitRev::ParserFromLog(CString &log)
 			}
 		}else
 		{
+			//Todo: Solve warning here. mode is indeed uninitialized here
 			switch(mode)
 			{
 			case LOG_REV_COMMIT_BODY:
