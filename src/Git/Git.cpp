@@ -106,6 +106,8 @@ static BOOL FindGitPath()
 
 
 #define MAX_DIRBUFFER 1000
+#define CALL_OUTPUT_READ_CHUNK_SIZE 1024
+
 CString CGit::ms_LastMsysGitDir;
 CGit g_Git;
 BOOL g_IsWingitDllload = TRUE;
@@ -272,21 +274,25 @@ BOOL CGit::IsInitRepos()
 
 	return FALSE;
 }
-int CGit::Run(CString cmd,BYTE_VECTOR *vector)
+int CGit::Run(CGitCall* pcall)
 {
 	PROCESS_INFORMATION pi;
 	HANDLE hRead;
-	if(RunAsync(cmd,&pi,&hRead))
+	if(RunAsync(pcall->GetCmd(),&pi,&hRead))
 		return GIT_ERROR_CREATE_PROCESS;
 
 	DWORD readnumber;
-	BYTE data;
-	while(ReadFile(hRead,&data,1,&readnumber,NULL))
+	BYTE data[CALL_OUTPUT_READ_CHUNK_SIZE];
+	bool bAborted=false;
+	while(ReadFile(hRead,data,CALL_OUTPUT_READ_CHUNK_SIZE,&readnumber,NULL))
 	{
-		//g_Buffer[readnumber]=0;
-		vector->push_back(data);
-//		StringAppend(output,g_Buffer,codes);
+		//Todo: when OnOutputData() returns 'true', abort git-command. Send CTRL-C signal?
+		if(!bAborted)//For now, flush output when command aborted.
+			if(pcall->OnOutputData(data,readnumber))
+				bAborted=true;
 	}
+	if(!bAborted)
+		pcall->OnEnd();
 
 	
 	CloseHandle(pi.hThread);
@@ -303,7 +309,25 @@ int CGit::Run(CString cmd,BYTE_VECTOR *vector)
 
 	CloseHandle(hRead);
 	return exitcode;
+}
+class CGitCall_ByteVector : public CGitCall
+{
+public:
+	CGitCall_ByteVector(CString cmd,BYTE_VECTOR* pvector):CGitCall(cmd),m_pvector(pvector){}
+	virtual bool OnOutputData(const BYTE* data, size_t size)
+	{
+		size_t oldsize=m_pvector->size();
+		m_pvector->resize(m_pvector->size()+size);
+		memcpy(&*(m_pvector->begin()+oldsize),data,size);
+		return false;
+	}
+	BYTE_VECTOR* m_pvector;
 
+};
+int CGit::Run(CString cmd,BYTE_VECTOR *vector)
+{
+	CGitCall_ByteVector call(cmd,vector);
+	return Run(&call);
 }
 int CGit::Run(CString cmd, CString* output,int code)
 {
@@ -391,6 +415,13 @@ int CGit::BuildOutputFormat(CString &format,bool IsFull)
 
 int CGit::GetLog(BYTE_VECTOR& logOut, CString &hash,  CTGitPath *path ,int count,int mask)
 {
+	CGitCall_ByteVector gitCall(CString(),&logOut);
+	return GetLog(&gitCall,hash,path,count,mask);
+}
+
+//int CGit::GetLog(CGitCall* pgitCall, CString &hash,  CTGitPath *path ,int count,int mask)
+int CGit::GetLog(CGitCall* pgitCall, CString &hash, CTGitPath *path, int count, int mask)
+{
 
 	CString cmd;
 	CString log;
@@ -446,7 +477,10 @@ int CGit::GetLog(BYTE_VECTOR& logOut, CString &hash,  CTGitPath *path ,int count
 	cmd += log;
 	cmd += CString(_T("\"  "))+hash+file;
 
-	return Run(cmd,&logOut);
+	pgitCall->SetCmd(cmd);
+
+	return Run(pgitCall);
+//	return Run(cmd,&logOut);
 }
 
 #if 0
