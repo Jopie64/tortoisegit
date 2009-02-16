@@ -26,6 +26,7 @@
 #include "DirFileEnum.h"
 #include "ShellUpdater.h"
 #include "AppUtils.h"
+#include "ProgressDlg.h"
 
 bool ImportPatchCommand::Execute()
 {
@@ -66,14 +67,22 @@ bool ImportPatchCommand::Execute()
 		{			
 			cmd.Format(_T("git.exe am \"%s\""),dlg.m_PathList[i].GetGitPathString());
 			
-			if(g_Git.Run(cmd,&output,CP_ACP))
+/*			if(g_Git.Run(cmd,&output,CP_ACP))
 			{
 				CMessageBox::Show(NULL,output,_T("TortoiseGit"),MB_OK);
 				return FALSE;
 			}
+*/			CProgressDlg progress;
+			progress.m_GitCmd=cmd;
+			progress.m_bShowCommand = FALSE;	// don't show the am command
+//			progress.m_PreText = out;			// show any output already generated in log window
+			progress.DoModal();
+
+
+
 		}
 		
-		CMessageBox::Show(NULL,CString(_T("Patch applied: "))+output,_T("TortoiseGit"),MB_OK);
+//		CMessageBox::Show(NULL,CString(_T("Patch applied: "))+output,_T("TortoiseGit"),MB_OK);
 		return TRUE;
 	}
 	
