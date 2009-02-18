@@ -15,10 +15,11 @@ class CGitByteArray:public std::vector<BYTE>
 public:
 	int find(BYTE data,int start=0)
 	{
-		for(int i=start;i<size();i++)
-			if( at(i) == data )
-				return i;
-		return -1;
+//		for(int i=start;i<size();i++)
+//			if( at(i) == data )
+//				return i;
+//		return -1;
+		return findData(&data,1,start);
 	}
 	int findNextString(int start=0)
 	{
@@ -45,12 +46,14 @@ public:
 			return -1;
 		if(dataSize==0)
 			return 0;
-		if(dataSize>size()-start)
+		size_t arraysize=size();
+		if(dataSize>arraysize-start)
 			return -1;//Data to find is greater then data to search in. No match
 
 		//Initialize
-		const BYTE* pos=&*(begin()+start);
-		const BYTE* dataEnd=&*(begin()+(size()-dataSize) );++dataEnd;//Set end one step after last place to search
+		const BYTE* arraybegin=&*begin();
+		const BYTE* pos=arraybegin+start;
+		const BYTE* dataEnd=arraybegin+(arraysize-dataSize);++dataEnd;//Set end one step after last place to search
 		if(pos>=dataEnd)
 			return -1;//Started over end. Return not found
 		if(dataSize==0)
@@ -64,7 +67,7 @@ public:
 				return -1;//Not found
 			//check rest of characters
 			if(memcmp(found,dataToFind,dataSize)==0)
-				return found-&*begin();//Match. Return position.
+				return found-arraybegin;//Match. Return position.
 			//No match. Set position on next byte and continue search
 			pos=found+1;
 		}
