@@ -1084,7 +1084,10 @@ int CTGitPathList::ParserFromLog(BYTE_VECTOR &log)
 
 void CTGitPathList::AddPath(const CTGitPath& newPath)
 {
-	m_paths.push_back(newPath);
+	//m_paths.push_back(newPath);
+	m_paths.insert(
+		lower_bound(m_paths.begin(),m_paths.end(),newPath),
+		newPath);
 	m_commonBaseDirectory.Reset();
 }
 int CTGitPathList::GetCount() const
@@ -1857,6 +1860,15 @@ private:
 
 CTGitPath * CTGitPathList::LookForGitPath(CString path)
 {
+	CTGitPath pathToFind(path);
+	PathVector::iterator iter_foundpath=lower_bound(m_paths.begin(),m_paths.end(),pathToFind);
+	if(iter_foundpath==m_paths.end())
+		return NULL;
+	CTGitPath& foundpath=*iter_foundpath;
+	if(foundpath<pathToFind||pathToFind<foundpath)
+		return NULL;
+	return &foundpath;
+
 	int i=0;
 	for(i=0;i<this->GetCount();i++)
 	{
