@@ -37,6 +37,9 @@ public:
 		REBASE_ABORT,
 		REBASE_FINISH,
 		REBASE_CONFLICT,
+		REBASE_EDIT,
+		REBASE_SQUASH_EDIT,
+		REBASE_SQUASH_CONFLICT,
 	};
 
 protected:
@@ -72,6 +75,16 @@ protected:
 	static UINT RebaseThreadEntry(LPVOID pVoid){return ((CRebaseDlg *)pVoid)->RebaseThread();};
 	BOOL IsEnd();
 
+	CString m_OrigBranchHash;
+	CString m_OrigUpstreamHash;
+
+	int VerifyNoConflict();
+	CString GetRebaseModeName(int rebasemode);
+
+	CString m_SquashMessage;
+
+	int CheckNextCommitIsSquash();
+
 public:
    
     afx_msg void OnBnClickedPickAll();
@@ -82,6 +95,7 @@ public:
 	afx_msg void OnCbnSelchangeBranch();
 	afx_msg void OnCbnSelchangeUpstream();
 	afx_msg void OnBnClickedContinue();
+	afx_msg void OnBnClickedAbort();
 
     CProgressCtrl m_ProgressBar;
     CStatic m_CtrlStatusText;
