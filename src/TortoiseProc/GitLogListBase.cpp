@@ -309,6 +309,7 @@ void CGitLogListBase::FillBackGround(HDC hdc, int Index,CRect &rect)
 	GitRev* pLogEntry = (GitRev*)m_arShownList.GetAt(Index);
 
 	if (m_Theme.IsAppThemed() && m_bVista)
+//	if(false)
 	{
 		m_Theme.Open(m_hWnd, L"Explorer");
 		int state = LISS_NORMAL;
@@ -340,7 +341,18 @@ void CGitLogListBase::FillBackGround(HDC hdc, int Index,CRect &rect)
 			}
 #endif
 		}
+		const char* StateText="Nothing";
+		switch(state)
+		{
+		case LISS_NORMAL: StateText="LISS_NORMAL";break;
+		case LISS_HOT: StateText="LISS_HOT";break;
+		case LISS_SELECTED: StateText="LISS_SELECTED";break;
+		case LISS_DISABLED: StateText="LISS_DISABLED";break;
+		case LISS_SELECTEDNOTFOCUS: StateText="LISS_SELECTEDNOTFOCUS";break;
+		case LISS_HOTSELECTED: StateText="LISS_HOTSELECTED";break;
+		}
 
+		TRACE("Item %d State %s\n",Index,StateText);
 		if (m_Theme.IsBackgroundPartiallyTransparent(LVP_LISTDETAIL, state))
 			m_Theme.DrawParentBackground(m_hWnd, hdc, &rect);
 
@@ -774,6 +786,8 @@ void CGitLogListBase::OnNMCustomdrawLoglist(NMHDR *pNMHDR, LRESULT *pResult)
 					DrawGraph(pLVCD->nmcd.hdc,rect,pLVCD->nmcd.dwItemSpec);
 
 					*pResult = CDRF_SKIPDEFAULT;
+					TRACE("Hier1\n");
+					//*pResult = CDRF_DODEFAULT;
 					return;
 				
 				}
