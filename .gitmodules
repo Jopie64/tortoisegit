@@ -1,3 +1,6 @@
 [submodule "ext/igit"]
 	path = ext/igit
 	url = git://repo.or.cz/git/mingw/4msysgit/wingit-dll.git
+[submodule "ext/boost"]
+	path = ext/boost
+	url = git://repo.or.cz/boost.git
