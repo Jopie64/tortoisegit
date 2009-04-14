@@ -395,6 +395,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DiffStatDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DiffStatDlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\LogFile.cpp"
 				>
 			</File>
