@@ -37,7 +37,8 @@ BOOL CDiffStatDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-
+	m_LcDiffstat.InsertColumn(0,L"File");
+	m_LcDiffstat.InsertColumn(0,L"Changes");
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
