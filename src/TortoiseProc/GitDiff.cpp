@@ -93,6 +93,7 @@ int CGitDiff::Diff(CTGitPath * pPath,CTGitPath * pPath2, git_revnum_t & rev1, gi
 			CString err;
 			g_Git.StringAppend(&err,&bytes[0],CP_ACP);
 			CMessageBox::Show(NULL,err,_T("TortoiseGit"),MB_OK|MB_ICONERROR);
+			return 0;
 		}
 		
 		CString oldhash;
