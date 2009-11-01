@@ -132,9 +132,9 @@ BOOL CTortoiseProcApp::InitInstance()
 
 	if(!CheckMsysGitDir())
 	{
-		if(CMessageBox::Show(NULL,_T("MSysGit(http://code.google.com/p/msysgit) have not installed Correctly\n\
-or MSysGit Path setting error\n\
-Click Yes to open setting dialog to setup MSysGit Path"),
+		if(CMessageBox::Show(NULL,_T("MSysGit(http://code.google.com/p/msysgit) is not installed Correctly\n\
+or MSysGit Path is not set.\n\
+Do you want to open the settings dialog to set the MSysGit Paht?"),
 							_T("TortoiseGit"),MB_YESNO|MB_ICONERROR)==IDYES)
 		{
 			// open settings dialog
