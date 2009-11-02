@@ -26,7 +26,7 @@ protected:
 public:
 	afx_msg void OnNMDblclk(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
-	int LaunchProc(CString& cmd);
+	int LaunchProc(const CString& cmd);
 };
 
 

@@ -121,7 +121,7 @@ void CPatchListCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	}
 }
 
-int CPatchListCtrl::LaunchProc(CString& command)
+int CPatchListCtrl::LaunchProc(const CString& command)
 {
 	CString tempfile=GetTempFile();
 	POSITION pos=this->GetFirstSelectedItemPosition();
