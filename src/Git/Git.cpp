@@ -120,6 +120,45 @@ CGit g_Git;
 // initialized by CheckMsysGitDir
 static LPTSTR l_processEnv = NULL;
 
+bool			OnOutputData(const BYTE* data, size_t size);
+
+void CGitCall_Collector::CheckCollectedData()
+{
+	//Find loginfo endmarker
+	int found;
+	while((found = m_ByteCollector.findData((const BYTE*)(const char*)m_SepToken, m_SepToken.GetLength())) >= 0)
+	{
+		//Prepare data for OnCollected and call it
+		BYTE_VECTOR collected;
+		collected.append(&*m_ByteCollector.begin(), found);
+
+		found += m_SepToken.GetLength(); //After OnCollected(), m_SepToken could have changed...
+		m_bInOnCollected = true;
+		OnCollected(collected);
+		m_bInOnCollected = false;
+
+		//Remove loginfo from bytecollector
+		m_ByteCollector.erase(m_ByteCollector.begin(), m_ByteCollector.begin() + found);
+	}
+}
+
+void CGitCall_Collector::SetSepToken(const CStringA SepToken)
+{
+	m_SepToken = SepToken;
+	if(!m_bInOnCollected)
+		CheckCollectedData();
+}
+
+bool CGitCall_Collector::OnOutputData(const BYTE *data, size_t size)
+{
+	if(size==0)
+		return Abort();
+	//Add received data to byte collector
+	m_ByteCollector.append(data, size);
+
+	CheckCollectedData();
+	return Abort();
+}
 
 
 CGit::CGit(void)

@@ -24,6 +24,26 @@ private:
 
 };
 
+class CGitCall_Collector : public CGitCall
+{
+public:
+	CGitCall_Collector(const CString& cmd, const CStringA sep):CGitCall(cmd), m_SepToken(sep), m_bInOnCollected(false){}
+	bool			OnOutputData(const BYTE* data, size_t size);
+
+	void			SetSepToken(const CStringA m_SepToken);
+	void			CheckCollectedData();
+
+
+	virtual bool	Abort(){return false;}
+	virtual void	OnCollected(BYTE_VECTOR& Data) = 0;
+	virtual void	OnEnd(){OnCollected(m_ByteCollector);}
+
+private:
+	BYTE_VECTOR		m_ByteCollector;
+	CStringA		m_SepToken;
+	bool			m_bInOnCollected;
+};
+
 class CTGitPath;
 
 class CGit
