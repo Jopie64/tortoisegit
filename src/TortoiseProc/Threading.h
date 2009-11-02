@@ -122,6 +122,7 @@ DWORD ExecAsync(const T_Callback& CB)
 class CMsg
 {
 public:
+	virtual ~CMsg(){}
 	virtual void Call() = 0;
 };
 
