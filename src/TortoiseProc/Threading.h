@@ -5,6 +5,33 @@
 namespace Threading
 {
 
+template <class T_Derived>
+class CSingleton
+{
+public:
+	CSingleton(){ASSERT(m_pInterface == NULL);}
+
+	static T_Derived* I()
+	{
+		if(m_pInterface == NULL)
+			m_pInterface = new T_Derived;
+		return m_pInterface;
+	}
+
+	static void Singleton_Destroy()
+	{
+		delete m_pInterface;
+		m_pInterface = NULL;
+	}
+
+private:
+
+	static T_Derived* m_pInterface;
+};
+
+template <class T_Derived>
+T_Derived* CSingleton<T_Derived>::m_pInterface = NULL;
+
 class CHandle
 {
 public:
@@ -52,6 +79,45 @@ public:
 private:
 	CCritSect& m_CritSect;
 };
+
+class CRunnableBase
+{
+public:
+	virtual UINT Run() = 0;
+
+};
+
+class CThread : public CHandle
+{
+public:
+	CThread(DWORD IdThread):m_IdThread(IdThread){Open();}
+
+	void Open(DWORD IdThread = 0, DWORD dwAccess = SYNCHRONIZE ){if(IdThread != 0)m_IdThread = IdThread; Attach(OpenThread(dwAccess, FALSE, m_IdThread));}
+	void Join(){WaitForSingleObject(H(),INFINITE);}
+private:
+	DWORD m_IdThread;
+	
+};
+
+template<class T_Callback>
+class CRunnableCb : public CRunnableBase
+{
+public:
+	CRunnableCb(const T_Callback& CB):m_CB(CB){}
+
+protected:
+	UINT Run(){m_CB();return 0;}
+
+	T_Callback m_CB;
+};
+
+DWORD ExecAsync_Td(CRunnableBase* pTd);
+
+template<class T_Callback>
+DWORD ExecAsync(const T_Callback& CB)
+{
+	return ExecAsync_Td(new CRunnableCb<T_Callback>(CB));
+}
 
 class CMsg
 {
@@ -102,6 +168,14 @@ class CMsgThread
 {
 public:
 	CMsgThread();
+	virtual ~CMsgThread();
+
+	void Register(DWORD IdThread = 0);
+	void Unregister();
+
+	bool IsRegistered() const {return m_IdThread != 0;}
+	DWORD GetIdThread() const {return m_IdThread;}
+
 	void PostMessage(CMsg* pMsg);
 	
 	template<class callback_T>
@@ -120,20 +194,49 @@ public:
 
 	int  GetThreadExitCode()const {return m_threadExitCode;}
 
+
 private:
 	void		SetQuitInfo(int threadExitCode);
 
+	DWORD		m_IdThread;
 	CMsgQueue	m_MsgQueue;
 	bool		m_bQuit;
 	int			m_threadExitCode;
 };
 
-
-class CThreading
+class CWinMlHook : public CMsgThread
 {
 public:
-	CThreading(void);
-	~CThreading(void);
+	CWinMlHook();
+	~CWinMlHook();
+	
+	static  LRESULT CALLBACK StaticCallback(int code, WPARAM wParam, LPARAM lParam);
+	LRESULT Callback(int code, WPARAM wParam, LPARAM lParam);
+
+	void Attach();
+	void Detach();
+	void Trigger();
+
+	HHOOK m_hHook;
+};
+
+typedef std::map<DWORD, CMsgThread*> T_MsgThreadMap;
+class CThreads : public CSingleton<CThreads>
+{
+public:
+	CThreads(void);
+	~CThreads(void);
+
+	void	RegisterThread(CMsgThread* pThread, DWORD IdThread = 0);
+	void	UnregisterThread(DWORD IdThread = 0);
+
+	CMsgThread* Get(DWORD IdThread = 0);
+
+private:
+
+	T_MsgThreadMap	m_MsgThreadMap;
+	CCritSect		m_CS;
+
 };
 
 }

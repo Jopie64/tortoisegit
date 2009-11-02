@@ -60,6 +60,23 @@ void CCritSect::Unlock()
 	LeaveCriticalSection(&m_CritSect);
 }
 
+UINT ExecAsync_Entry(LPVOID pVoid)
+{
+	CRunnableBase* pTd = (CRunnableBase*)pVoid;
+	UINT Result = pTd->Run();
+	delete pTd;
+	return Result;
+}
+
+DWORD ExecAsync_Td(CRunnableBase* pTd)
+{
+	CWinThread* pWinTd = AfxBeginThread(ExecAsync_Entry, pTd);
+	if(pWinTd == NULL)
+		return 0;
+	return pWinTd->m_nThreadID;
+}
+
+
 CMsgQueue::CMsgQueue()
 :	m_pCurrMsg(NULL)
 {
@@ -112,8 +129,30 @@ CMsg* CMsgQueue::Peek()
 
 CMsgThread::CMsgThread()
 :	m_bQuit(false),
-	m_threadExitCode(0)
+	m_threadExitCode(0),
+	m_IdThread(0)
 {
+}
+
+CMsgThread::~CMsgThread()
+{
+	Unregister();
+}
+
+void CMsgThread::Register(DWORD IdThread)
+{
+	if(IdThread == 0)
+		IdThread = GetCurrentThreadId();
+	m_IdThread = IdThread;
+	CThreads::I()->RegisterThread(this, IdThread);
+}
+
+void CMsgThread::Unregister()
+{
+	if(m_IdThread == 0)
+		return;
+	CThreads::I()->UnregisterThread(m_IdThread);
+	m_IdThread = 0;
 }
 
 void CMsgThread::PostMessage(CMsg* pMsg)
@@ -125,7 +164,7 @@ void CMsgThread::PostMessage(CMsg* pMsg)
 bool CMsgThread::CallMessages()
 {
 	CMsg* pMsg;
-	while(pMsg = m_MsgQueue.Get())
+	while((pMsg = m_MsgQueue.Get()) != NULL)
 	{
 		if(m_bQuit)
 			break;
@@ -173,12 +212,91 @@ int G_i = test();
 */
 
 
-CThreading::CThreading(void)
+CWinMlHook::CWinMlHook()
+:	m_hHook(0)
+{
+}
+CWinMlHook::~CWinMlHook()
+{
+	Detach();
+}
+
+LRESULT CWinMlHook::Callback(int code, WPARAM wParam, LPARAM lParam)
+{
+	MSG* pMsg = (MSG*)lParam;
+	if(pMsg->message != WM_NULL)
+		return CallNextHookEx(NULL, code, wParam, lParam);
+	CallMessages();
+	return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
+LRESULT CWinMlHook::StaticCallback(int code, WPARAM wParam, LPARAM lParam)
+{
+	CWinMlHook* pThis = dynamic_cast<CWinMlHook*>(CThreads::I()->Get());
+	if(pThis == NULL)
+	{
+		ASSERT(FALSE);
+		return CallNextHookEx(NULL, code, wParam, lParam);;
+	}
+	return pThis->Callback(code, wParam, lParam);
+}
+
+void CWinMlHook::Attach()
+{
+	Detach();
+	Register();
+	m_hHook = SetWindowsHookEx(WH_GETMESSAGE, &CWinMlHook::StaticCallback, NULL, GetIdThread());
+}
+
+void CWinMlHook::Detach()
+{
+	if(m_hHook == NULL)
+		return; //Nothing to detach...
+	Unregister();
+	UnhookWindowsHookEx(m_hHook);
+	m_hHook = 0;
+}
+
+void CWinMlHook::Trigger()
+{
+	if(!IsRegistered())
+		return;
+	PostThreadMessage(GetIdThread(), WM_NULL, 0, 0);
+}
+
+
+
+CThreads::CThreads(void)
 {
 }
 
-CThreading::~CThreading(void)
+CThreads::~CThreads(void)
 {
+}
+
+CMsgThread* CThreads::Get(DWORD IdThread)
+{
+	CScopeLock Lock(m_CS);
+	if(IdThread == 0)
+		IdThread = GetCurrentThreadId();
+	T_MsgThreadMap::iterator it = m_MsgThreadMap.find(IdThread);
+	if(it == m_MsgThreadMap.end())
+		return NULL;
+	return it->second;
+}
+
+void CThreads::RegisterThread(CMsgThread* pThread, DWORD IdThread)
+{
+	CScopeLock Lock(m_CS);
+	if(IdThread == 0)
+		IdThread = GetCurrentThreadId();
+	m_MsgThreadMap[IdThread] = pThread;
+}
+
+void CThreads::UnregisterThread(DWORD IdThread)
+{
+	CScopeLock Lock(m_CS);
+	m_MsgThreadMap.erase(IdThread);
 }
 
 
