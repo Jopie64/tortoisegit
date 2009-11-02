@@ -99,6 +99,13 @@ void  CMsgQueue::Add(CMsg* pMsg)
 	m_MsgQueue.push(pMsg);
 }
 
+int CMsgQueue::Size()
+{
+	CScopeLock lock(m_QueueCs);
+	return m_MsgQueue.size();
+}
+
+
 CMsg* CMsgQueue::Get()
 {
 	CScopeLock lock(m_QueueCs);
@@ -246,6 +253,7 @@ void CWinMlHook::Attach()
 	Detach();
 	Register();
 	m_hHook = SetWindowsHookEx(WH_GETMESSAGE, &CWinMlHook::StaticCallback, NULL, GetIdThread());
+	PostThreadMessage(GetIdThread(), WM_NULL, 0, 0);//Manual trigger
 }
 
 void CWinMlHook::Detach()
@@ -261,7 +269,8 @@ void CWinMlHook::Trigger()
 {
 	if(!IsRegistered())
 		return;
-	PostThreadMessage(GetIdThread(), WM_NULL, 0, 0);
+	if(!IsTriggered())
+		PostThreadMessage(GetIdThread(), WM_NULL, 0, 0);
 }
 
 

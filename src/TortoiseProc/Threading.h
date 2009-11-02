@@ -157,6 +157,7 @@ public:
 	CMsg* Peek();
 
 	void  Clear();
+	int	  Size();
 
 private:
 	CMsg*	  m_pCurrMsg;
@@ -195,6 +196,7 @@ public:
 	int  GetThreadExitCode()const {return m_threadExitCode;}
 
 	bool IsThisThread() const {return GetIdThread() == GetCurrentThreadId();}
+	bool IsTriggered() {return m_MsgQueue.Size() > 1;}
 
 
 private:
