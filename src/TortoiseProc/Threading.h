@@ -194,6 +194,8 @@ public:
 
 	int  GetThreadExitCode()const {return m_threadExitCode;}
 
+	bool IsThisThread() const {return GetIdThread() == GetCurrentThreadId();}
+
 
 private:
 	void		SetQuitInfo(int threadExitCode);
