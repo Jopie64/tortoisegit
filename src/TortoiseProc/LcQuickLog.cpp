@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "TortoiseProc.h"
 #include "LcQuickLog.h"
-#include "Threading.h"
+#include "Git.h"
 
 
 // CLcQuickLog
@@ -13,8 +13,8 @@ IMPLEMENT_DYNAMIC(CLcQuickLog, CListCtrl)
 
 CLcQuickLog::CLcQuickLog()
 :	m_bAbort(false),
-	m_IdThread(0),
-	m_IdWinThread(GetCurrentThreadId())
+	m_IdGitThread(0),
+	m_pWinThread(Threading::CThreads::I()->Get(GetCurrentThreadId()))
 {
 
 }
@@ -33,21 +33,59 @@ END_MESSAGE_MAP()
 
 // CLcQuickLog message handlers
 
-void CLcQuickLog::AddLog()
+void CLcQuickLog::AddLog(CQlCommit* pCommit)
 {
-	SetItemCountEx(GetItemCount() + 1);
+	if(!m_pWinThread->IsThisThread())
+	{
+		m_pWinThread->PostCallback(simplebind(&CLcQuickLog::AddLog, this, pCommit));
+		return;
+	}
 
+	m_vCommit.push_back(pCommit);
+	SetItemCountEx(m_vCommit.size());
+	Invalidate(FALSE);
 }
+
+class CGitRetrLog : public CGitCall_Collector
+{
+public:
+	CGitRetrLog(CLcQuickLog* pLC):CGitCall_Collector(L"git.exe log --pretty=oneline", "\n"),m_pLC(pLC){}
+
+	virtual bool	Abort()const{return m_pLC->m_bAbort;}
+	virtual void	OnCollected(BYTE_VECTOR& Data)
+	{
+		CQlCommit* pCommit = new CQlCommit;
+		CStringA commitText = (const char*)&*Data.begin();
+		pCommit->m_Rev = commitText;
+		m_pLC->AddLog(pCommit);
+	}
+
+private:
+	CLcQuickLog* m_pLC;
+
+
+};
 
 void CLcQuickLog::AsyncRetrieveGitLog()
 {
 	while(!m_bAbort)
 	{
-		Sleep(100);
-		Threading::CThreads::I()->Get(m_IdWinThread)->PostCallback(simplebind(
-			&CLcQuickLog::AddLog,this));
+//		Sleep(100);
+//		m_pWinThread->PostCallback(simplebind(
+//			&CLcQuickLog::AddLog,this));
+		CGitRetrLog W_Cmd(this);
+		g_Git.Run(&W_Cmd);
 		
 	}
+}
+
+void CLcQuickLog::Clear()
+{
+	for(CvCommit::iterator it = m_vCommit.begin(); it != m_vCommit.end(); ++it)
+		delete *it;
+
+	m_vCommit.clear();
+	SetItemCountEx(0);
 }
 
 void CLcQuickLog::PreSubclassWindow()
@@ -57,7 +95,7 @@ void CLcQuickLog::PreSubclassWindow()
 	InsertColumn(1, L"Col1", 0, 300);
 	//SetItemCountEx(100);
 
-	m_IdThread = Threading::ExecAsync(simplebind(&CLcQuickLog::AsyncRetrieveGitLog, this));
+	m_IdGitThread = Threading::ExecAsync(simplebind(&CLcQuickLog::AsyncRetrieveGitLog, this));
 }
 
 void CLcQuickLog::OnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
@@ -86,8 +124,8 @@ void CLcQuickLog::OnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 void CLcQuickLog::OnDestroy()
 {
 	m_bAbort = true;
-	if(m_IdThread != 0)
-		Threading::CThread(m_IdThread).Join();
+	if(m_IdGitThread != 0)
+		Threading::CThread(m_IdGitThread).Join();
 
 	CListCtrl::OnDestroy();
 }
