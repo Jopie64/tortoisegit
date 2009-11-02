@@ -26,7 +26,7 @@ public:
 
 	void AsyncRetrieveGitLog();
 
-	void AddLog(CQlCommit* pCommit);
+	void AddLog(CvCommit commits);
 
 	void Clear();
 

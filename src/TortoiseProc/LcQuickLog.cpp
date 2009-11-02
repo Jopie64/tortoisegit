@@ -33,17 +33,17 @@ END_MESSAGE_MAP()
 
 // CLcQuickLog message handlers
 
-void CLcQuickLog::AddLog(CQlCommit* pCommit)
+void CLcQuickLog::AddLog(CvCommit commits)
 {
 	if(!m_pWinThread->IsThisThread())
 	{
-		m_pWinThread->PostCallback(simplebind(&CLcQuickLog::AddLog, this, pCommit));
+		m_pWinThread->PostCallback(simplebind(&CLcQuickLog::AddLog, this, commits));
 		return;
 	}
 
-	m_vCommit.push_back(pCommit);
+	m_vCommit.insert(m_vCommit.end(), commits.begin(), commits.end());
 	SetItemCountEx(m_vCommit.size());
-	Invalidate(FALSE);
+//	Invalidate(FALSE);
 }
 
 class CGitRetrLog : public CGitCall_Collector
@@ -55,11 +55,24 @@ public:
 	virtual void	OnCollected(BYTE_VECTOR& Data)
 	{
 		CQlCommit* pCommit = new CQlCommit;
-		CStringA commitText = (const char*)&*Data.begin();
-		pCommit->m_Rev = commitText;
-		m_pLC->AddLog(pCommit);
+		Data.push_back('\0');
+		CString commitText;
+		g_Git.StringAppend(&commitText, &*Data.begin());
+
+		int place = 0;
+		pCommit->m_Rev = commitText.Tokenize(L" ", place);
+		pCommit->m_Title = commitText.Mid(place);
+
+		m_vCommits.push_back(pCommit);
+
+		if(m_vCommits.size() > 100)
+		{
+			m_pLC->AddLog(m_vCommits);
+			m_vCommits.clear();
+		}
 	}
 
+	CvCommit	 m_vCommits;
 private:
 	CLcQuickLog* m_pLC;
 
@@ -68,13 +81,14 @@ private:
 
 void CLcQuickLog::AsyncRetrieveGitLog()
 {
-	while(!m_bAbort)
+//	while(!m_bAbort)
 	{
 //		Sleep(100);
 //		m_pWinThread->PostCallback(simplebind(
 //			&CLcQuickLog::AddLog,this));
 		CGitRetrLog W_Cmd(this);
 		g_Git.Run(&W_Cmd);
+		AddLog(W_Cmd.m_vCommits);
 		
 	}
 }
@@ -105,16 +119,22 @@ void CLcQuickLog::OnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 	LV_ITEM* pItem= &(pDispInfo)->item;
 
 	int ItemIx = pItem->iItem;
+	if(ItemIx >= m_vCommit.size())
+	{
+		ASSERT(FALSE);
+		return;
+	}
+	CQlCommit* pCommit = m_vCommit[ItemIx];
 
 	if (pItem->mask & LVIF_TEXT) //valid text buffer?
 	{
 		switch(pItem->iSubItem)
 		{
 			case 0: 
-				wsprintf(pItem->pszText, L"%d", ItemIx);
+				_snwprintf(pItem->pszText, pItem->cchTextMax, L"%s", pCommit->m_Rev);
 				break;
 			case 1: 
-				wsprintf(pItem->pszText, L"Hallo!");
+				_snwprintf(pItem->pszText, pItem->cchTextMax, L"%s", pCommit->m_Title);
 				break;
 		}
 	}
@@ -127,5 +147,6 @@ void CLcQuickLog::OnDestroy()
 	if(m_IdGitThread != 0)
 		Threading::CThread(m_IdGitThread).Join();
 
+	Clear();
 	CListCtrl::OnDestroy();
 }
