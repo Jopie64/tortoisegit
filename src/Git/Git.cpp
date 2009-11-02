@@ -125,6 +125,9 @@ bool			OnOutputData(const BYTE* data, size_t size);
 void CGitCall_Collector::CheckCollectedData()
 {
 	//Find loginfo endmarker
+	if(m_SepToken.IsEmpty())
+		return;
+
 	int found;
 	while((found = m_ByteCollector.findData((const BYTE*)(const char*)m_SepToken, m_SepToken.GetLength())) >= 0)
 	{

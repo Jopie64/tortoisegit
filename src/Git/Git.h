@@ -36,7 +36,7 @@ public:
 
 	virtual bool	Abort(){return false;}
 	virtual void	OnCollected(BYTE_VECTOR& Data) = 0;
-	virtual void	OnEnd(){OnCollected(m_ByteCollector);}
+	virtual void	OnEnd(){if(!m_ByteCollector.empty())OnCollected(m_ByteCollector);}
 
 private:
 	BYTE_VECTOR		m_ByteCollector;
