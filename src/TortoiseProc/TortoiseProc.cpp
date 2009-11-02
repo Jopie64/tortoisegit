@@ -44,6 +44,10 @@
 #include "..\version.h"
 #include "..\Settings\Settings.h"
 #include "gitindex.h"
+#include "Threading.h"
+
+
+Threading::CWinMlHook G_MainTd;
 
 #define STRUCT_IOVEC_DEFINED
 //#include "sasl.h"
@@ -129,6 +133,8 @@ BOOL CTortoiseProcApp::InitInstance()
 
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&m_gdiplusToken,&gdiplusStartupInput,NULL);
+
+	G_MainTd.Attach();
 
 	if(!CheckMsysGitDir())
 	{
@@ -471,6 +477,7 @@ Do you want to open the settings dialog to set the MSysGit Paht?"),
 	}
 
 
+	G_MainTd.Detach();
 	// Since the dialog has been closed, return FALSE so that we exit the
 	// application, rather than start the application's message pump.
 	return FALSE;
