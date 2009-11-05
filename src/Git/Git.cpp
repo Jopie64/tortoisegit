@@ -125,17 +125,17 @@ bool			OnOutputData(const BYTE* data, size_t size);
 void CGitCall_Collector::CheckCollectedData()
 {
 	//Find loginfo endmarker
-	if(m_SepToken.IsEmpty())
+	if(m_SepToken.empty())
 		return;
 
 	int found;
-	while((found = m_ByteCollector.findData((const BYTE*)(const char*)m_SepToken, m_SepToken.GetLength())) >= 0)
+	while((found = m_ByteCollector.findData((const BYTE*)&*m_SepToken.begin(), m_SepToken.size())) >= 0)
 	{
 		//Prepare data for OnCollected and call it
 		BYTE_VECTOR collected;
 		collected.append(&*m_ByteCollector.begin(), found);
 
-		found += m_SepToken.GetLength(); //After OnCollected(), m_SepToken could have changed...
+		found += m_SepToken.size(); //After OnCollected(), m_SepToken could have changed...
 		m_bInOnCollected = true;
 		OnCollected(collected);
 		m_bInOnCollected = false;
@@ -145,12 +145,27 @@ void CGitCall_Collector::CheckCollectedData()
 	}
 }
 
+void CGitCall_Collector::SetSepToken(char sep)
+{
+	BYTE_VECTOR SepToken;
+	SepToken.append((BYTE*)&sep, 1);
+	SetSepToken(SepToken);
+}
+
 void CGitCall_Collector::SetSepToken(const CStringA SepToken)
+{
+	BYTE_VECTOR vSepToken;
+	vSepToken.append((const BYTE*)(const char*)SepToken, SepToken.GetLength());
+	SetSepToken(vSepToken);
+}
+
+void CGitCall_Collector::SetSepToken(const BYTE_VECTOR& SepToken)
 {
 	m_SepToken = SepToken;
 	if(!m_bInOnCollected)
 		CheckCollectedData();
 }
+
 
 bool CGitCall_Collector::OnOutputData(const BYTE *data, size_t size)
 {

@@ -80,6 +80,8 @@ public:
 	}
 	int append(const BYTE* data, size_t dataSize)
 	{
+		if(dataSize == 0)
+			return 0;
 		size_t oldsize=size();
 		resize(oldsize+dataSize);
 		memcpy(&*(begin()+oldsize),data,dataSize);

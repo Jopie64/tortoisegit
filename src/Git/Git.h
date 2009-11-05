@@ -27,10 +27,13 @@ private:
 class CGitCall_Collector : public CGitCall
 {
 public:
-	CGitCall_Collector(const CString& cmd, const CStringA sep):CGitCall(cmd), m_SepToken(sep), m_bInOnCollected(false){}
+	CGitCall_Collector(const CString& cmd, const CStringA sep):CGitCall(cmd), m_bInOnCollected(false){SetSepToken(sep);}
+	CGitCall_Collector(const CString& cmd, char sep):CGitCall(cmd), m_bInOnCollected(false){SetSepToken(sep);}
 	bool			OnOutputData(const BYTE* data, size_t size);
 
-	void			SetSepToken(const CStringA m_SepToken);
+	void			SetSepToken(char sep);
+	void			SetSepToken(const CStringA SepToken);
+	void			SetSepToken(const BYTE_VECTOR& SepToken);
 	void			CheckCollectedData();
 
 
@@ -40,7 +43,7 @@ public:
 
 private:
 	BYTE_VECTOR		m_ByteCollector;
-	CStringA		m_SepToken;
+	BYTE_VECTOR		m_SepToken;
 	bool			m_bInOnCollected;
 };
 
