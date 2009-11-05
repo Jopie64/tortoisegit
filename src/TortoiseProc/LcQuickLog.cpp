@@ -49,23 +49,48 @@ void CLcQuickLog::AddLog(CvCommit commits)
 class CGitRetrLog : public CGitCall_Collector
 {
 public:
-	CGitRetrLog(CLcQuickLog* pLC):CGitCall_Collector(L"git.exe log --pretty=oneline", "\n"),m_pLC(pLC){}
+	CGitRetrLog(CLcQuickLog* pLC):CGitCall_Collector(
+//		L"git.exe log --pretty=oneline",
+		L"git log --format=format:\"%H%x00%P%x00%s%x00%ai%x00%an%x00\"",
+		'\0'),m_pLC(pLC),m_iState(0){}
 
 	virtual bool	Abort()const{return m_pLC->m_bAbort;}
+
+	static CString ToString(BYTE_VECTOR& Data)
+	{
+		CString result;
+		Data.push_back('\0');
+		g_Git.StringAppend(&result, &*Data.begin());
+		return result;
+	}
+
 	virtual void	OnCollected(BYTE_VECTOR& Data)
 	{
-		CQlCommit* pCommit = new CQlCommit;
 		Data.push_back('\0');
-		CString commitText;
-		g_Git.StringAppend(&commitText, &*Data.begin());
+		switch(m_iState)
+		{
+		case 0:	// New / Commit hash
+			m_vCommits.push_back(new CQlCommit);
+			m_vCommits.back()->m_Rev = ToString(Data);
+			break;
+		case 1: // Parents
+			m_vCommits.back()->m_RevParents = ToString(Data);
+			break;
+		case 2: // Subject
+			m_vCommits.back()->m_Title = ToString(Data);
+			break;
+		case 3: // Author Date
+			m_vCommits.back()->m_Date = ToString(Data);
+			break;
+		case 4: // Author Name
+			m_vCommits.back()->m_Author = ToString(Data);
+			break;
+		}
+		++m_iState;
+		if(m_iState > 4)
+			m_iState = 0;
 
-		int place = 0;
-		pCommit->m_Rev = commitText.Tokenize(L" ", place);
-		pCommit->m_Title = commitText.Mid(place);
-
-		m_vCommits.push_back(pCommit);
-
-		if(m_vCommits.size() > 100)
+		if(m_iState == 0 && m_vCommits.size() > 100)
 		{
 			m_pLC->AddLog(m_vCommits);
 			m_vCommits.clear();
@@ -74,7 +99,9 @@ public:
 
 	CvCommit	 m_vCommits;
 private:
-	CLcQuickLog* m_pLC;
+	CLcQuickLog*	m_pLC;
+	int				m_iState;
+	
 
 
 };
@@ -105,8 +132,10 @@ void CLcQuickLog::Clear()
 void CLcQuickLog::PreSubclassWindow()
 {
 	SetExtendedStyle(GetExtendedStyle() | LVS_EX_FULLROWSELECT);
-	InsertColumn(0, L"Col0", 0, 80);
-	InsertColumn(1, L"Col1", 0, 300);
+	InsertColumn(0, L"Commit", 0, 80);
+	InsertColumn(1, L"Subject", 0, 300);
+	InsertColumn(2, L"Date", 0, 150);
+	InsertColumn(3, L"Author", 0, 150);
 	//SetItemCountEx(100);
 
 	m_IdGitThread = Threading::ExecAsync(simplebind(&CLcQuickLog::AsyncRetrieveGitLog, this));
@@ -135,6 +164,12 @@ void CLcQuickLog::OnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 				break;
 			case 1: 
 				_snwprintf(pItem->pszText, pItem->cchTextMax, L"%s", pCommit->m_Title);
+				break;
+			case 2: 
+				_snwprintf(pItem->pszText, pItem->cchTextMax, L"%s", pCommit->m_Date);
+				break;
+			case 3: 
+				_snwprintf(pItem->pszText, pItem->cchTextMax, L"%s", pCommit->m_Author);
 				break;
 		}
 	}

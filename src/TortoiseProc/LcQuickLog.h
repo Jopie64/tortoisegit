@@ -8,7 +8,10 @@ class CQlCommit
 {
 public:
 	git_revnum_t m_Rev;
+	git_revnum_t m_RevParents;
 	CString		 m_Title;
+	CString		 m_Date;
+	CString		 m_Author;
 };
 
 typedef std::vector<CQlCommit*> CvCommit;
