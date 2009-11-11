@@ -26,8 +26,8 @@ bool LogCommand::Execute()
 {
 	//the log command line looks like this:
 	//command:log path:<path_to_file_or_directory_to_show_the_log_messages> [startrev:<startrevision>] [endrev:<endrevision>]
-	CQuickLogDlg(NULL).DoModal();
-	return true;
+//	CQuickLogDlg(NULL).DoModal();
+//	return true;
 
 	CString val = parser.GetVal(_T("startrev"));
 	if ( val.IsEmpty() )
