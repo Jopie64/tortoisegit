@@ -122,6 +122,14 @@ static LPTSTR l_processEnv = NULL;
 
 bool			OnOutputData(const BYTE* data, size_t size);
 
+CGitCall_Collector::CGitCall_Collector(const CString& cmd, const BYTE* sepData, int sepSize)
+:	CGitCall(cmd), m_bInOnCollected(false)
+{
+	BYTE_VECTOR sep;
+	sep.append(sepData, sepSize);
+	SetSepToken(sep);
+}
+
 void CGitCall_Collector::CheckCollectedData()
 {
 	//Find loginfo endmarker

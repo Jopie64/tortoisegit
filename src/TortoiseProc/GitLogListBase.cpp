@@ -1881,11 +1881,11 @@ void CGitLogListBase::GetTimeRange(CTime &oldest, CTime &latest)
 }
 
 //Helper class for FetchFullLogInfo()
-class CGitCall_FetchFullLogInfo : public CGitCall
+class CGitCall_FetchFullLogInfo : public CGitCall_Collector
 {
 public:
-	CGitCall_FetchFullLogInfo(CGitLogListBase* ploglist):m_ploglist(ploglist),m_CollectedCount(0){}
-	virtual bool OnOutputData(const BYTE* data, size_t size)
+	CGitCall_FetchFullLogInfo(CGitLogListBase* ploglist):CGitCall_Collector(CString(),(const BYTE*)"\0\0#<", 4){}
+/*	virtual bool OnOutputData(const BYTE* data, size_t size)
 	{
 		if(size==0)
 			return m_ploglist->m_bExitThread;
@@ -1909,12 +1909,24 @@ public:
 
 		return m_ploglist->m_bExitThread;
 	}
-	virtual void OnEnd()
+*/
+	virtual bool Abort()const{return m_ploglist->m_bExitThread;}
+
+	virtual void OnCollected(BYTE_VECTOR& Data)
 	{
-		//Rest should be a complete log line.
-		if(!m_ByteCollector.empty())
-			OnLogInfo(m_ByteCollector);
+		//Add terminator
+		Data.push_back('\0');
+		Data.push_back('\0');
+
+		OnLogInfo(Data);
 	}
+
+//	virtual void OnEnd()
+//	{
+		//Rest should be a complete log line.
+//		if(!m_ByteCollector.empty())
+//			OnLogInfo(m_ByteCollector);
+//	}
 
 
 	void OnLogInfo(BYTE_VECTOR& logInfo)
@@ -1982,7 +1994,7 @@ public:
 	}
 
 	CGitLogListBase*	m_ploglist;
-	BYTE_VECTOR			m_ByteCollector;
+//	BYTE_VECTOR			m_ByteCollector;
 	int					m_CollectedCount;
 
 };

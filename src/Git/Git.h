@@ -29,6 +29,7 @@ class CGitCall_Collector : public CGitCall
 public:
 	CGitCall_Collector(const CString& cmd, const CStringA sep):CGitCall(cmd), m_bInOnCollected(false){SetSepToken(sep);}
 	CGitCall_Collector(const CString& cmd, char sep):CGitCall(cmd), m_bInOnCollected(false){SetSepToken(sep);}
+	CGitCall_Collector(const CString& cmd, const BYTE* sepData, int sepSize);
 	bool			OnOutputData(const BYTE* data, size_t size);
 
 	void			SetSepToken(char sep);
