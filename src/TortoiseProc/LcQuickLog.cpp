@@ -43,6 +43,8 @@ void CLcQuickLog::AddLog(CvCommit commits)
 
 	m_vCommit.insert(m_vCommit.end(), commits.begin(), commits.end());
 	SetItemCountEx(m_vCommit.size());
+
+	RefreshCurrPage();
 //	Invalidate(FALSE);
 }
 
@@ -118,6 +120,23 @@ void CLcQuickLog::AsyncRetrieveGitLog()
 		AddLog(W_Cmd.m_vCommits);
 		
 	}
+}
+
+void CLcQuickLog::RefreshCurrPage()
+{
+	int topIndex	 = GetTopIndex();
+	int bottomIndex  = topIndex + GetCountPerPage();
+
+	git_revnum_t topHash;
+	git_revnum_t bottomHash;
+	if(topIndex >= m_vCommit.size())
+		return; //Nothing to refresh
+
+	topHash = m_vCommit[topIndex]->m_Rev;
+	if(bottomIndex < m_vCommit.size())
+		bottomHash = m_vCommit[bottomIndex]->m_Rev;
+	else
+		bottomHash = m_vCommit.back()->m_Rev;
 }
 
 void CLcQuickLog::Clear()

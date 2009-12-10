@@ -33,6 +33,8 @@ public:
 
 	void Clear();
 
+	void RefreshCurrPage();
+
 protected:
 	DECLARE_MESSAGE_MAP()
 
